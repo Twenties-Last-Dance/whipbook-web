@@ -611,7 +611,7 @@ export default function DesktopAudiobookPlayer({ book, pages, onBack }: DesktopA
               color: '#999',
               marginTop: '0.5rem'
             }}>
-              Get the full audiobook
+              Get the physical book
             </div>
           </div>
         </aside>
@@ -794,7 +794,7 @@ export default function DesktopAudiobookPlayer({ book, pages, onBack }: DesktopA
                 color: '#999',
                 marginTop: '0.5rem'
               }}>
-                Support us by purchasing the full audiobook
+                Support us by purchasing the physical book
               </div>
             </div>
           </div>
