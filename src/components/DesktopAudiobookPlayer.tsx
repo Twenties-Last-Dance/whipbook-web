@@ -459,7 +459,7 @@ export default function DesktopAudiobookPlayer({ book, pages, onBack }: DesktopA
                     }
                   }}
                 >
-                  ⏮️
+                  ◀◀
                 </button>
 
                 <button
@@ -489,7 +489,7 @@ export default function DesktopAudiobookPlayer({ book, pages, onBack }: DesktopA
                     e.currentTarget.style.boxShadow = '0 8px 30px rgba(255, 87, 87, 0.5)';
                   }}
                 >
-                  {isPlaying ? '⏸️' : '▶️'}
+                  {isPlaying ? '⏸' : '▶'}
                 </button>
 
                 <button
@@ -528,7 +528,7 @@ export default function DesktopAudiobookPlayer({ book, pages, onBack }: DesktopA
                     }
                   }}
                 >
-                  ⏭️
+                  ▶▶
                 </button>
               </div>
           </div>
