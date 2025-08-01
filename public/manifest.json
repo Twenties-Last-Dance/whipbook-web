@@ -1,0 +1,23 @@
+{
+  "name": "Whipbook - Interactive Audiobook Player",
+  "short_name": "Whipbook",
+  "description": "Interactive audiobook player with word-level synchronization",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8f9fa",
+  "theme_color": "#FF5757",
+  "icons": [
+    {
+      "src": "/whipbook.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/whipbook.png",
+      "sizes": "512x512", 
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
