@@ -566,6 +566,54 @@ export default function DesktopAudiobookPlayer({ book, pages, onBack }: DesktopA
               }} />
             </div>
           </div>
+
+          {/* Buy Now Button */}
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '20px',
+            padding: '2rem',
+            boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)',
+            border: '1px solid #e9ecef',
+            textAlign: 'center'
+          }}>
+            <a
+              href={book.purchase_link}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'inline-block',
+                width: '100%',
+                background: 'linear-gradient(135deg, #FF9500, #FF7700)',
+                color: 'white',
+                padding: '1rem 2rem',
+                borderRadius: '12px',
+                textDecoration: 'none',
+                fontSize: '1.1rem',
+                fontWeight: 'bold',
+                boxShadow: '0 8px 25px rgba(255, 149, 0, 0.4)',
+                transition: 'all 0.3s ease',
+                border: 'none',
+                cursor: 'pointer'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 12px 35px rgba(255, 149, 0, 0.5)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 8px 25px rgba(255, 149, 0, 0.4)';
+              }}
+            >
+              🛒 BUY NOW
+            </a>
+            <div style={{
+              fontSize: '0.8rem',
+              color: '#999',
+              marginTop: '0.5rem'
+            }}>
+              Get the full audiobook
+            </div>
+          </div>
         </aside>
       </div>
 
@@ -699,10 +747,55 @@ export default function DesktopAudiobookPlayer({ book, pages, onBack }: DesktopA
               <p style={{ 
                 lineHeight: 1.6, 
                 color: '#666',
-                fontSize: '1rem'
+                fontSize: '1rem',
+                marginBottom: '2rem'
               }}>
                 {book.description}
               </p>
+            </div>
+
+            {/* Buy Now Button in Modal */}
+            <div style={{
+              textAlign: 'center',
+              borderTop: '1px solid #e9ecef',
+              paddingTop: '2rem'
+            }}>
+              <a
+                href={book.purchase_link}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'inline-block',
+                  background: 'linear-gradient(135deg, #FF9500, #FF7700)',
+                  color: 'white',
+                  padding: '1rem 3rem',
+                  borderRadius: '12px',
+                  textDecoration: 'none',
+                  fontSize: '1.1rem',
+                  fontWeight: 'bold',
+                  boxShadow: '0 8px 25px rgba(255, 149, 0, 0.4)',
+                  transition: 'all 0.3s ease',
+                  border: 'none',
+                  cursor: 'pointer'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 12px 35px rgba(255, 149, 0, 0.5)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 8px 25px rgba(255, 149, 0, 0.4)';
+                }}
+              >
+                🛒 BUY NOW ON AMAZON
+              </a>
+              <div style={{
+                fontSize: '0.8rem',
+                color: '#999',
+                marginTop: '0.5rem'
+              }}>
+                Support us by purchasing the full audiobook
+              </div>
             </div>
           </div>
         </div>
