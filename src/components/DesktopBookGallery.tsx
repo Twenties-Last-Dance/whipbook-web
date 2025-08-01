@@ -58,9 +58,10 @@ export default function DesktopBookGallery({ onBookSelect }: DesktopBookGalleryP
         justifyContent: 'center',
         alignItems: 'center',
         height: '100vh',
-        backgroundColor: '#f8f9fa',
+        background: 'linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%)',
         fontSize: '1.2rem',
-        color: '#666'
+        color: '#6b7280',
+        fontWeight: '600'
       }}>
         Loading books...
       </div>
@@ -69,18 +70,19 @@ export default function DesktopBookGallery({ onBookSelect }: DesktopBookGalleryP
 
   return (
     <div style={{
-      backgroundColor: '#f8f9fa',
+      background: 'linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%)',
       minHeight: '100vh'
     }}>
       {/* Header */}
       <header style={{
-        backgroundColor: 'white',
-        borderBottom: '1px solid #e9ecef',
-        padding: '1rem 0',
+        background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.9) 100%)',
+        backdropFilter: 'blur(20px)',
+        borderBottom: '1px solid rgba(255, 87, 87, 0.1)',
+        padding: '1.5rem 0',
         position: 'sticky',
         top: 0,
         zIndex: 100,
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+        boxShadow: '0 8px 32px rgba(0,0,0,0.08)'
       }}>
         <div style={{
           maxWidth: '1200px',
@@ -92,11 +94,12 @@ export default function DesktopBookGallery({ onBookSelect }: DesktopBookGalleryP
         }}>
           <h1 style={{
             margin: 0,
-            fontSize: '1.8rem',
-            fontWeight: 'bold',
-            color: '#333'
+            fontSize: '2rem',
+            fontWeight: '700',
+            color: '#1a1a1a',
+            letterSpacing: '-0.5px'
           }}>
-            Book Library
+            📚 Whipbook Library
           </h1>
 
           {/* Search Bar */}
@@ -111,31 +114,36 @@ export default function DesktopBookGallery({ onBookSelect }: DesktopBookGalleryP
               onChange={(e) => setSearchTerm(e.target.value)}
               style={{
                 width: '100%',
-                padding: '12px 16px 12px 40px',
-                backgroundColor: '#f8f9fa',
-                border: '2px solid #e9ecef',
-                borderRadius: '25px',
-                color: '#333',
+                padding: '14px 18px 14px 45px',
+                background: 'rgba(255, 255, 255, 0.8)',
+                border: '2px solid rgba(255, 87, 87, 0.15)',
+                borderRadius: '20px',
+                color: '#1a1a1a',
                 fontSize: '1rem',
+                fontWeight: '500',
                 outline: 'none',
-                transition: 'all 0.3s ease'
+                transition: 'all 0.3s ease',
+                backdropFilter: 'blur(10px)',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
               }}
               onFocus={(e) => {
-                e.target.style.borderColor = '#FF5757';
-                e.target.style.backgroundColor = 'white';
+                e.target.style.borderColor = 'rgba(255, 87, 87, 0.4)';
+                e.target.style.background = 'rgba(255, 255, 255, 0.95)';
+                e.target.style.boxShadow = '0 8px 24px rgba(255, 87, 87, 0.15)';
               }}
               onBlur={(e) => {
-                e.target.style.borderColor = '#e9ecef';
-                e.target.style.backgroundColor = '#f8f9fa';
+                e.target.style.borderColor = 'rgba(255, 87, 87, 0.15)';
+                e.target.style.background = 'rgba(255, 255, 255, 0.8)';
+                e.target.style.boxShadow = '0 4px 12px rgba(0,0,0,0.05)';
               }}
             />
             <div style={{
               position: 'absolute',
-              left: '16px',
+              left: '18px',
               top: '50%',
               transform: 'translateY(-50%)',
-              fontSize: '1.2rem',
-              color: '#666'
+              fontSize: '1.1rem',
+              color: '#9ca3af'
             }}>
               🔍
             </div>
@@ -146,9 +154,10 @@ export default function DesktopBookGallery({ onBookSelect }: DesktopBookGalleryP
         <div style={{
           maxWidth: '1200px',
           margin: '0 auto',
-          padding: '0.5rem 2rem 0',
+          padding: '0.75rem 2rem 0',
           fontSize: '0.9rem',
-          color: '#666'
+          color: '#6b7280',
+          fontWeight: '500'
         }}>
           {filteredBooks.length} books found
         </div>
@@ -172,26 +181,30 @@ export default function DesktopBookGallery({ onBookSelect }: DesktopBookGalleryP
               onClick={() => handleBookClick(book)}
               style={{
                 cursor: 'pointer',
-                borderRadius: '12px',
+                borderRadius: '20px',
                 overflow: 'hidden',
-                backgroundColor: 'white',
-                boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-                transition: 'all 0.3s ease',
-                border: '1px solid #e9ecef'
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.9) 100%)',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                border: '1px solid rgba(255, 87, 87, 0.1)',
+                backdropFilter: 'blur(20px)'
               }}
               onMouseOver={(e) => {
-                e.currentTarget.style.transform = 'translateY(-4px)';
-                e.currentTarget.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.15)';
+                e.currentTarget.style.transform = 'translateY(-8px) scale(1.02)';
+                e.currentTarget.style.boxShadow = '0 20px 60px rgba(255, 87, 87, 0.15)';
+                e.currentTarget.style.borderColor = 'rgba(255, 87, 87, 0.2)';
               }}
               onMouseOut={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
+                e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.08)';
+                e.currentTarget.style.borderColor = 'rgba(255, 87, 87, 0.1)';
               }}
             >
               <div style={{
                 position: 'relative',
                 aspectRatio: '3/4',
-                overflow: 'hidden'
+                overflow: 'hidden',
+                borderRadius: '16px 16px 0 0'
               }}>
                 <img
                   src={book.cover_image_url}
@@ -199,7 +212,8 @@ export default function DesktopBookGallery({ onBookSelect }: DesktopBookGalleryP
                   style={{
                     width: '100%',
                     height: '100%',
-                    objectFit: 'cover'
+                    objectFit: 'cover',
+                    transition: 'transform 0.3s ease'
                   }}
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
@@ -213,16 +227,18 @@ export default function DesktopBookGallery({ onBookSelect }: DesktopBookGalleryP
                 {book.rating_avg > 0 && (
                   <div style={{
                     position: 'absolute',
-                    top: '8px',
-                    right: '8px',
-                    backgroundColor: 'rgba(0,0,0,0.8)',
-                    borderRadius: '12px',
-                    padding: '4px 8px',
+                    top: '12px',
+                    right: '12px',
+                    background: 'rgba(0,0,0,0.85)',
+                    borderRadius: '16px',
+                    padding: '6px 10px',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '4px',
                     fontSize: '0.8rem',
-                    color: 'white'
+                    color: 'white',
+                    fontWeight: '600',
+                    backdropFilter: 'blur(10px)'
                   }}>
                     <span style={{ color: '#FFD700' }}>⭐</span>
                     <span>{book.rating_avg.toFixed(1)}</span>
@@ -231,50 +247,53 @@ export default function DesktopBookGallery({ onBookSelect }: DesktopBookGalleryP
               </div>
 
               <div style={{
-                padding: '1rem'
+                padding: '1.25rem'
               }}>
                 <h3 style={{
                   margin: '0 0 0.5rem 0',
-                  fontSize: '1rem',
-                  fontWeight: 'bold',
+                  fontSize: '1.1rem',
+                  fontWeight: '700',
                   lineHeight: 1.3,
-                  color: '#333',
+                  color: '#1a1a1a',
                   overflow: 'hidden',
                   display: '-webkit-box',
                   WebkitLineClamp: 2,
                   WebkitBoxOrient: 'vertical',
                   textOverflow: 'ellipsis',
-                  minHeight: '2.6rem'
+                  minHeight: '2.6rem',
+                  letterSpacing: '-0.3px'
                 }}>
                   {book.book_title}
                 </h3>
                 
                 <p style={{
                   margin: 0,
-                  fontSize: '0.85rem',
-                  color: '#666',
+                  fontSize: '0.9rem',
+                  color: '#6b7280',
                   overflow: 'hidden',
                   whiteSpace: 'nowrap',
-                  textOverflow: 'ellipsis'
+                  textOverflow: 'ellipsis',
+                  fontWeight: '500'
                 }}>
                   {book.author}
                 </p>
 
                 {/* Additional info */}
                 <div style={{
-                  marginTop: '0.5rem',
+                  marginTop: '0.75rem',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  fontSize: '0.75rem',
-                  color: '#999'
+                  fontSize: '0.8rem',
+                  color: '#9ca3af',
+                  fontWeight: '500'
                 }}>
                   <span>
-                    {Math.floor(book.total_duration_ms / 60000)} min
+                    🎧 {Math.floor(book.total_duration_ms / 60000)} min
                   </span>
                   {book.rating_count > 0 && (
                     <span>
-                      {book.rating_count} reviews
+                      💬 {book.rating_count} reviews
                     </span>
                   )}
                 </div>
@@ -311,14 +330,25 @@ export default function DesktopBookGallery({ onBookSelect }: DesktopBookGalleryP
             <button
               onClick={() => setSearchTerm('')}
               style={{
-                background: '#FF5757',
+                background: 'linear-gradient(135deg, #FF5757 0%, #e04848 100%)',
                 border: 'none',
-                borderRadius: '8px',
+                borderRadius: '16px',
                 padding: '1rem 2rem',
                 color: 'white',
                 fontSize: '1rem',
                 cursor: 'pointer',
-                fontWeight: '500'
+                fontWeight: '700',
+                boxShadow: '0 8px 24px rgba(255, 87, 87, 0.3)',
+                transition: 'all 0.3s ease',
+                letterSpacing: '0.5px'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 12px 32px rgba(255, 87, 87, 0.4)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 8px 24px rgba(255, 87, 87, 0.3)';
               }}
             >
               Clear Search

@@ -136,16 +136,17 @@ export default function DesktopAudiobookPlayer({ book, pages, onBack }: DesktopA
   return (
     <div style={{
       minHeight: '100vh',
-      backgroundColor: '#f8f9fa',
+      background: 'linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%)',
       display: 'flex',
       flexDirection: 'column'
     }}>
       {/* Header */}
       <header style={{
-        backgroundColor: 'white',
-        borderBottom: '1px solid #e9ecef',
-        padding: '1rem 0',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+        background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.9) 100%)',
+        backdropFilter: 'blur(20px)',
+        borderBottom: '1px solid rgba(255, 87, 87, 0.1)',
+        padding: '1.5rem 0',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.08)'
       }}>
         <div style={{
           maxWidth: '1200px',
@@ -159,16 +160,27 @@ export default function DesktopAudiobookPlayer({ book, pages, onBack }: DesktopA
             <button
               onClick={handleBack}
               style={{
-                background: '#FF5757',
+                background: 'linear-gradient(135deg, #FF5757 0%, #e04848 100%)',
                 border: 'none',
-                borderRadius: '8px',
-                padding: '0.5rem 1rem',
+                borderRadius: '12px',
+                padding: '0.75rem 1.5rem',
                 color: 'white',
                 fontSize: '1rem',
+                fontWeight: '600',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.5rem'
+                gap: '0.5rem',
+                boxShadow: '0 4px 16px rgba(255, 87, 87, 0.3)',
+                transition: 'all 0.3s ease'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 8px 24px rgba(255, 87, 87, 0.4)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 16px rgba(255, 87, 87, 0.3)';
               }}
             >
               ← Back
@@ -181,23 +193,26 @@ export default function DesktopAudiobookPlayer({ book, pages, onBack }: DesktopA
                 style={{
                   width: '50px',
                   height: '60px',
-                  borderRadius: '6px',
-                  objectFit: 'cover'
+                  borderRadius: '12px',
+                  objectFit: 'cover',
+                  boxShadow: '0 8px 20px rgba(0,0,0,0.15)'
                 }}
               />
               <div>
                 <h1 style={{
                   margin: 0,
-                  fontSize: '1.3rem',
-                  fontWeight: 'bold',
-                  color: '#333'
+                  fontSize: '1.4rem',
+                  fontWeight: '700',
+                  color: '#1a1a1a',
+                  letterSpacing: '-0.5px'
                 }}>
                   {book.book_title}
                 </h1>
                 <p style={{
                   margin: 0,
                   fontSize: '1rem',
-                  color: '#666'
+                  color: '#6b7280',
+                  fontWeight: '500'
                 }}>
                   by {book.author}
                 </p>
@@ -208,13 +223,26 @@ export default function DesktopAudiobookPlayer({ book, pages, onBack }: DesktopA
           <button
             onClick={() => setShowInfo(true)}
             style={{
-              background: 'transparent',
-              border: '2px solid #e9ecef',
-              borderRadius: '8px',
-              padding: '0.5rem 1rem',
-              color: '#666',
+              background: 'rgba(255, 255, 255, 0.8)',
+              border: '2px solid rgba(255, 87, 87, 0.2)',
+              borderRadius: '12px',
+              padding: '0.75rem 1.5rem',
+              color: '#374151',
               fontSize: '1rem',
-              cursor: 'pointer'
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              backdropFilter: 'blur(10px)'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.borderColor = 'rgba(255, 87, 87, 0.4)';
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.95)';
+              e.currentTarget.style.transform = 'translateY(-2px)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.borderColor = 'rgba(255, 87, 87, 0.2)';
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.8)';
+              e.currentTarget.style.transform = 'translateY(0)';
             }}
           >
             ℹ️ Book Info
@@ -372,11 +400,12 @@ export default function DesktopAudiobookPlayer({ book, pages, onBack }: DesktopA
         }}>
           {/* Audio Controls */}
           <div style={{
-            backgroundColor: 'white',
-            borderRadius: '20px',
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.9) 100%)',
+            borderRadius: '24px',
             padding: '2.5rem',
-            boxShadow: '0 12px 40px rgba(0, 0, 0, 0.15)',
-            border: '1px solid #e9ecef'
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.12)',
+            border: '1px solid rgba(255, 87, 87, 0.1)',
+            backdropFilter: 'blur(20px)'
           }}>
               {/* Progress Bar */}
               <div style={{ marginBottom: '2rem' }}>
@@ -393,22 +422,24 @@ export default function DesktopAudiobookPlayer({ book, pages, onBack }: DesktopA
                   }}
                   style={{
                     width: '100%',
-                    height: '8px',
-                    borderRadius: '4px',
+                    height: '10px',
+                    borderRadius: '10px',
                     outline: 'none',
                     cursor: 'pointer',
-                    background: `linear-gradient(to right, #FF5757 0%, #FF5757 ${(currentTime / (book.total_duration_ms / 1000)) * 100}%, #e9ecef ${(currentTime / (book.total_duration_ms / 1000)) * 100}%, #e9ecef 100%)`,
+                    background: `linear-gradient(to right, #FF5757 0%, #FF5757 ${(currentTime / (book.total_duration_ms / 1000)) * 100}%, rgba(255, 87, 87, 0.15) ${(currentTime / (book.total_duration_ms / 1000)) * 100}%, rgba(255, 87, 87, 0.15) 100%)`,
                     WebkitAppearance: 'none',
-                    appearance: 'none'
+                    appearance: 'none',
+                    boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)'
                   }}
                 />
                 <div style={{
                   display: 'flex',
                   justifyContent: 'space-between',
-                  fontSize: '1rem',
-                  color: '#555',
-                  marginTop: '0.75rem',
-                  fontWeight: '600'
+                  fontSize: '0.95rem',
+                  color: '#6b7280',
+                  marginTop: '1rem',
+                  fontWeight: '600',
+                  letterSpacing: '0.5px'
                 }}>
                   <span>{formatTime(currentTime)}</span>
                   <span>{formatTime(book.total_duration_ms / 1000)}</span>
@@ -431,31 +462,34 @@ export default function DesktopAudiobookPlayer({ book, pages, onBack }: DesktopA
                   }}
                   disabled={currentPageIndex === 0}
                   style={{
-                    background: 'rgba(255, 255, 255, 0.95)',
-                    border: '3px solid rgba(255, 87, 87, 0.3)',
-                    borderRadius: '50%',
-                    width: '60px',
-                    height: '60px',
-                    color: currentPageIndex === 0 ? '#ccc' : '#FF5757',
-                    fontSize: '1.5rem',
+                    background: currentPageIndex === 0 ? 'rgba(243, 244, 246, 0.8)' : 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.85) 100%)',
+                    border: `2px solid ${currentPageIndex === 0 ? 'rgba(229, 231, 235, 0.5)' : 'rgba(255, 87, 87, 0.2)'}`,
+                    borderRadius: '20px',
+                    width: '64px',
+                    height: '64px',
+                    color: currentPageIndex === 0 ? '#9ca3af' : '#FF5757',
+                    fontSize: '1.4rem',
                     cursor: currentPageIndex === 0 ? 'not-allowed' : 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     transition: 'all 0.3s ease',
-                    boxShadow: '0 6px 20px rgba(0, 0, 0, 0.15)',
-                    fontWeight: 'bold'
+                    boxShadow: currentPageIndex === 0 ? '0 4px 12px rgba(0, 0, 0, 0.08)' : '0 8px 24px rgba(255, 87, 87, 0.2)',
+                    fontWeight: 'bold',
+                    backdropFilter: 'blur(10px)'
                   }}
                   onMouseOver={(e) => {
                     if (currentPageIndex > 0) {
-                      e.currentTarget.style.transform = 'scale(1.1)';
-                      e.currentTarget.style.boxShadow = '0 8px 25px rgba(255, 87, 87, 0.3)';
+                      e.currentTarget.style.transform = 'scale(1.05) translateY(-2px)';
+                      e.currentTarget.style.boxShadow = '0 12px 32px rgba(255, 87, 87, 0.35)';
+                      e.currentTarget.style.borderColor = 'rgba(255, 87, 87, 0.4)';
                     }
                   }}
                   onMouseOut={(e) => {
                     if (currentPageIndex > 0) {
-                      e.currentTarget.style.transform = 'scale(1)';
-                      e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.15)';
+                      e.currentTarget.style.transform = 'scale(1) translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 8px 24px rgba(255, 87, 87, 0.2)';
+                      e.currentTarget.style.borderColor = 'rgba(255, 87, 87, 0.2)';
                     }
                   }}
                 >
@@ -465,28 +499,29 @@ export default function DesktopAudiobookPlayer({ book, pages, onBack }: DesktopA
                 <button
                   onClick={togglePlayPause}
                   style={{
-                    background: 'linear-gradient(135deg, #FF5757, #e04848)',
-                    border: '3px solid rgba(255, 255, 255, 0.3)',
-                    borderRadius: '50%',
-                    width: '85px',
-                    height: '85px',
+                    background: 'linear-gradient(135deg, #FF5757 0%, #e04848 100%)',
+                    border: '3px solid rgba(255, 255, 255, 0.4)',
+                    borderRadius: '28px',
+                    width: '90px',
+                    height: '90px',
                     color: 'white',
                     fontSize: '2.2rem',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    boxShadow: '0 8px 30px rgba(255, 87, 87, 0.5)',
-                    transition: 'all 0.3s ease',
-                    fontWeight: 'bold'
+                    boxShadow: '0 12px 40px rgba(255, 87, 87, 0.4), 0 0 0 0 rgba(255, 87, 87, 0.3)',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    fontWeight: 'bold',
+                    position: 'relative'
                   }}
                   onMouseOver={(e) => {
-                    e.currentTarget.style.transform = 'scale(1.1)';
-                    e.currentTarget.style.boxShadow = '0 12px 40px rgba(255, 87, 87, 0.6)';
+                    e.currentTarget.style.transform = 'scale(1.08) translateY(-3px)';
+                    e.currentTarget.style.boxShadow = '0 20px 60px rgba(255, 87, 87, 0.5), 0 0 0 8px rgba(255, 87, 87, 0.1)';
                   }}
                   onMouseOut={(e) => {
-                    e.currentTarget.style.transform = 'scale(1)';
-                    e.currentTarget.style.boxShadow = '0 8px 30px rgba(255, 87, 87, 0.5)';
+                    e.currentTarget.style.transform = 'scale(1) translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 12px 40px rgba(255, 87, 87, 0.4), 0 0 0 0 rgba(255, 87, 87, 0.3)';
                   }}
                 >
                   {isPlaying ? '⏸' : '▶'}
@@ -500,31 +535,34 @@ export default function DesktopAudiobookPlayer({ book, pages, onBack }: DesktopA
                   }}
                   disabled={currentPageIndex === pages.length - 1}
                   style={{
-                    background: 'rgba(255, 255, 255, 0.95)',
-                    border: '3px solid rgba(255, 87, 87, 0.3)',
-                    borderRadius: '50%',
-                    width: '60px',
-                    height: '60px',
-                    color: currentPageIndex === pages.length - 1 ? '#ccc' : '#FF5757',
-                    fontSize: '1.5rem',
+                    background: currentPageIndex === pages.length - 1 ? 'rgba(243, 244, 246, 0.8)' : 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.85) 100%)',
+                    border: `2px solid ${currentPageIndex === pages.length - 1 ? 'rgba(229, 231, 235, 0.5)' : 'rgba(255, 87, 87, 0.2)'}`,
+                    borderRadius: '20px',
+                    width: '64px',
+                    height: '64px',
+                    color: currentPageIndex === pages.length - 1 ? '#9ca3af' : '#FF5757',
+                    fontSize: '1.4rem',
                     cursor: currentPageIndex === pages.length - 1 ? 'not-allowed' : 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     transition: 'all 0.3s ease',
-                    boxShadow: '0 6px 20px rgba(0, 0, 0, 0.15)',
-                    fontWeight: 'bold'
+                    boxShadow: currentPageIndex === pages.length - 1 ? '0 4px 12px rgba(0, 0, 0, 0.08)' : '0 8px 24px rgba(255, 87, 87, 0.2)',
+                    fontWeight: 'bold',
+                    backdropFilter: 'blur(10px)'
                   }}
                   onMouseOver={(e) => {
                     if (currentPageIndex < pages.length - 1) {
-                      e.currentTarget.style.transform = 'scale(1.1)';
-                      e.currentTarget.style.boxShadow = '0 8px 25px rgba(255, 87, 87, 0.3)';
+                      e.currentTarget.style.transform = 'scale(1.05) translateY(-2px)';
+                      e.currentTarget.style.boxShadow = '0 12px 32px rgba(255, 87, 87, 0.35)';
+                      e.currentTarget.style.borderColor = 'rgba(255, 87, 87, 0.4)';
                     }
                   }}
                   onMouseOut={(e) => {
                     if (currentPageIndex < pages.length - 1) {
-                      e.currentTarget.style.transform = 'scale(1)';
-                      e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.15)';
+                      e.currentTarget.style.transform = 'scale(1) translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 8px 24px rgba(255, 87, 87, 0.2)';
+                      e.currentTarget.style.borderColor = 'rgba(255, 87, 87, 0.2)';
                     }
                   }}
                 >
@@ -535,46 +573,51 @@ export default function DesktopAudiobookPlayer({ book, pages, onBack }: DesktopA
 
           {/* Current Page Info */}
           <div style={{
-            backgroundColor: 'white',
-            borderRadius: '20px',
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.9) 100%)',
+            borderRadius: '24px',
             padding: '2rem',
-            boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)',
-            border: '1px solid #e9ecef',
-            textAlign: 'center'
+            boxShadow: '0 12px 35px rgba(0, 0, 0, 0.08)',
+            border: '1px solid rgba(255, 87, 87, 0.1)',
+            textAlign: 'center',
+            backdropFilter: 'blur(20px)'
           }}>
             <div style={{
-              fontSize: '1.2rem',
-              fontWeight: 'bold',
-              color: '#333',
-              marginBottom: '1rem'
+              fontSize: '1.3rem',
+              fontWeight: '700',
+              color: '#1a1a1a',
+              marginBottom: '1.5rem',
+              letterSpacing: '-0.5px'
             }}>
               Page {currentPageIndex + 1} of {pages.length}
             </div>
             <div style={{
               width: '100%',
-              height: '10px',
-              backgroundColor: 'rgba(255, 87, 87, 0.1)',
-              borderRadius: '5px',
-              overflow: 'hidden'
+              height: '12px',
+              backgroundColor: 'rgba(255, 87, 87, 0.12)',
+              borderRadius: '12px',
+              overflow: 'hidden',
+              boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.08)'
             }}>
               <div style={{
                 width: `${((currentPageIndex + 1) / pages.length) * 100}%`,
                 height: '100%',
-                backgroundColor: '#FF5757',
-                borderRadius: '5px',
-                transition: 'width 0.3s ease'
+                background: 'linear-gradient(90deg, #FF5757 0%, #e04848 100%)',
+                borderRadius: '12px',
+                transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                boxShadow: '0 2px 8px rgba(255, 87, 87, 0.3)'
               }} />
             </div>
           </div>
 
           {/* Buy Now Button */}
           <div style={{
-            backgroundColor: 'white',
-            borderRadius: '20px',
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.9) 100%)',
+            borderRadius: '24px',
             padding: '2rem',
-            boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)',
-            border: '1px solid #e9ecef',
-            textAlign: 'center'
+            boxShadow: '0 12px 35px rgba(0, 0, 0, 0.08)',
+            border: '1px solid rgba(255, 87, 87, 0.1)',
+            textAlign: 'center',
+            backdropFilter: 'blur(20px)'
           }}>
             <a
               href={book.purchase_link}
@@ -583,33 +626,35 @@ export default function DesktopAudiobookPlayer({ book, pages, onBack }: DesktopA
               style={{
                 display: 'inline-block',
                 width: '100%',
-                background: 'linear-gradient(135deg, #FF9500, #FF7700)',
+                background: 'linear-gradient(135deg, #FF9500 0%, #FF7700 100%)',
                 color: 'white',
-                padding: '1rem 2rem',
-                borderRadius: '12px',
+                padding: '1.2rem 2rem',
+                borderRadius: '16px',
                 textDecoration: 'none',
                 fontSize: '1.1rem',
-                fontWeight: 'bold',
-                boxShadow: '0 8px 25px rgba(255, 149, 0, 0.4)',
-                transition: 'all 0.3s ease',
+                fontWeight: '700',
+                boxShadow: '0 12px 40px rgba(255, 149, 0, 0.35)',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 border: 'none',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                letterSpacing: '0.5px'
               }}
               onMouseOver={(e) => {
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 12px 35px rgba(255, 149, 0, 0.5)';
+                e.currentTarget.style.transform = 'translateY(-3px) scale(1.02)';
+                e.currentTarget.style.boxShadow = '0 20px 60px rgba(255, 149, 0, 0.45)';
               }}
               onMouseOut={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 8px 25px rgba(255, 149, 0, 0.4)';
+                e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                e.currentTarget.style.boxShadow = '0 12px 40px rgba(255, 149, 0, 0.35)';
               }}
             >
               🛒 BUY NOW
             </a>
             <div style={{
-              fontSize: '0.8rem',
-              color: '#999',
-              marginTop: '0.5rem'
+              fontSize: '0.85rem',
+              color: '#6b7280',
+              marginTop: '0.75rem',
+              fontWeight: '500'
             }}>
               Get the physical book
             </div>
@@ -633,13 +678,16 @@ export default function DesktopAudiobookPlayer({ book, pages, onBack }: DesktopA
           padding: '2rem'
         }}>
           <div style={{
-            backgroundColor: 'white',
-            borderRadius: '16px',
-            padding: '2rem',
-            maxWidth: '600px',
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.95) 100%)',
+            borderRadius: '24px',
+            padding: '2.5rem',
+            maxWidth: '650px',
             width: '100%',
-            maxHeight: '80vh',
-            overflowY: 'auto'
+            maxHeight: '85vh',
+            overflowY: 'auto',
+            boxShadow: '0 25px 80px rgba(0, 0, 0, 0.15)',
+            border: '1px solid rgba(255, 87, 87, 0.1)',
+            backdropFilter: 'blur(20px)'
           }}>
             <div style={{
               display: 'flex',
@@ -647,7 +695,7 @@ export default function DesktopAudiobookPlayer({ book, pages, onBack }: DesktopA
               alignItems: 'center',
               marginBottom: '2rem'
             }}>
-              <h2 style={{ margin: 0, fontSize: '1.5rem', color: '#333' }}>
+              <h2 style={{ margin: 0, fontSize: '1.6rem', fontWeight: '700', color: '#1a1a1a', letterSpacing: '-0.5px' }}>
                 Book Details
               </h2>
               <button
