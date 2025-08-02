@@ -154,12 +154,19 @@ export default function DesktopBookGallery({ onBookSelect }: DesktopBookGalleryP
         <div style={{
           maxWidth: '1200px',
           margin: '0 auto',
-          padding: '0.75rem 2rem 0',
-          fontSize: '0.9rem',
-          color: '#6b7280',
-          fontWeight: '500'
+          padding: '0.75rem 2rem 0'
         }}>
-          {filteredBooks.length} books found
+          <div style={{
+            fontSize: '0.95rem',
+            color: '#64748b',
+            fontWeight: '600',
+            background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(124, 58, 237, 0.05) 100%)',
+            padding: '8px 16px',
+            borderRadius: '12px',
+            display: 'inline-block'
+          }}>
+            {filteredBooks.length} books found
+          </div>
         </div>
       </header>
 
@@ -167,13 +174,13 @@ export default function DesktopBookGallery({ onBookSelect }: DesktopBookGalleryP
       <main style={{
         maxWidth: '1200px',
         margin: '0 auto',
-        padding: '2rem'
+        padding: 'clamp(1rem, 4vw, 2rem)'
       }}>
         {/* Gallery Grid */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-          gap: '1.5rem'
+          gridTemplateColumns: 'repeat(auto-fill, minmax(min(220px, 100%), 1fr))',
+          gap: 'clamp(1rem, 3vw, 2rem)'
         }}>
           {filteredBooks.map((book) => (
             <div

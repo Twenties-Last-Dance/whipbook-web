@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import type { Book, Page, WordData } from '@/services/bookService';
 import { useRouter } from 'next/navigation';
 
@@ -24,6 +24,8 @@ export default function DesktopAudiobookPlayer({ book, pages, onBack }: DesktopA
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [highlightedWordIndex, setHighlightedWordIndex] = useState(-1);
   const [showInfo, setShowInfo] = useState(false);
+  const [isSequentialHighlighting, setIsSequentialHighlighting] = useState(false);
+  const sequentialTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const router = useRouter();
 
   const currentPage = pages[currentPageIndex];
@@ -44,6 +46,65 @@ export default function DesktopAudiobookPlayer({ book, pages, onBack }: DesktopA
     [currentPage]
   );
 
+  // Sequential highlighting function to ensure no words are skipped
+  const highlightWordsSequentially = useCallback((startIndex: number, endIndex: number, targetTime: number) => {
+    // Handle both forward and backward movement
+    const isForward = startIndex <= endIndex;
+    const actualStart = Math.min(startIndex, endIndex);
+    const actualEnd = Math.max(startIndex, endIndex);
+    
+    setIsSequentialHighlighting(true);
+    
+    const highlightNext = (currentIndex: number) => {
+      if ((!isForward && currentIndex < actualStart) || 
+          (isForward && currentIndex > actualEnd) || 
+          currentIndex < 0 || currentIndex >= wordTimings.length) {
+        setIsSequentialHighlighting(false);
+        return;
+      }
+      
+      setHighlightedWordIndex(currentIndex);
+      
+      const isComplete = (isForward && currentIndex >= endIndex) || 
+                        (!isForward && currentIndex <= endIndex);
+      
+      if (!isComplete) {
+        // Calculate delay based on word timing or use minimum delay
+        const currentTiming = wordTimings[currentIndex];
+        const nextIndex = isForward ? currentIndex + 1 : currentIndex - 1;
+        const nextTiming = wordTimings[nextIndex];
+        let delay = 80; // minimum delay in ms
+        
+        if (currentTiming && nextTiming) {
+          const timingDiff = Math.abs((nextTiming.startTime - currentTiming.startTime) * 1000);
+          delay = Math.max(40, Math.min(120, timingDiff)); // between 40ms and 120ms for faster sequential highlighting
+        }
+        
+        sequentialTimeoutRef.current = setTimeout(() => {
+          highlightNext(isForward ? currentIndex + 1 : currentIndex - 1);
+        }, delay);
+      } else {
+        setIsSequentialHighlighting(false);
+        // Set audio time to target after sequential highlighting is complete
+        const audio = audioRef.current;
+        if (audio && targetTime !== -1) {
+          audio.currentTime = targetTime;
+        }
+      }
+    };
+    
+    highlightNext(startIndex);
+  }, [wordTimings]);
+
+  // Cleanup sequential highlighting timeout
+  useEffect(() => {
+    return () => {
+      if (sequentialTimeoutRef.current) {
+        clearTimeout(sequentialTimeoutRef.current);
+      }
+    };
+  }, []);
+
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -51,6 +112,11 @@ export default function DesktopAudiobookPlayer({ book, pages, onBack }: DesktopA
     const updateTime = () => {
       const time = audio.currentTime;
       setCurrentTime(time);
+
+      // Don't update highlighting if sequential highlighting is in progress
+      if (isSequentialHighlighting) {
+        return;
+      }
 
       // Find the correct page for the current time
       let correctPageIndex = currentPageIndex;
@@ -69,21 +135,46 @@ export default function DesktopAudiobookPlayer({ book, pages, onBack }: DesktopA
       // Update page if needed
       if (correctPageIndex !== currentPageIndex) {
         setCurrentPageIndex(correctPageIndex);
+        setHighlightedWordIndex(-1); // Reset highlighting when changing pages
         return; // Let the next render cycle handle word highlighting
       }
 
-      // Find highlighted word within current page
-      const currentWordIndex = wordTimings.findIndex(
-        (timing) => time >= timing.startTime && time <= timing.endTime
-      );
-      setHighlightedWordIndex(currentWordIndex);
+      // Enhanced word highlighting logic - simplified approach
+      let foundWordIndex = -1;
+      
+      // First, try to find exact timing match
+      for (let i = 0; i < wordTimings.length; i++) {
+        const timing = wordTimings[i];
+        if (time >= timing.startTime && time <= timing.endTime) {
+          foundWordIndex = i;
+          break;
+        }
+      }
+      
+      // If no exact match, find the closest word based on current time
+      if (foundWordIndex === -1) {
+        let closestDistance = Infinity;
+        for (let i = 0; i < wordTimings.length; i++) {
+          const timing = wordTimings[i];
+          const distance = Math.abs(time - timing.startTime);
+          if (distance < closestDistance) {
+            closestDistance = distance;
+            foundWordIndex = i;
+          }
+        }
+      }
+      
+      // Simple highlighting - just update the highlighted word directly
+      if (foundWordIndex !== -1) {
+        setHighlightedWordIndex(foundWordIndex);
+      }
     };
 
     audio.addEventListener('timeupdate', updateTime);
     return () => audio.removeEventListener('timeupdate', updateTime);
-  }, [currentPageIndex, wordTimings, currentPage, pages]);
+  }, [currentPageIndex, wordTimings, currentPage, pages, highlightedWordIndex, isSequentialHighlighting, isPlaying]);
 
-  const togglePlayPause = () => {
+  const togglePlayPause = useCallback(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
@@ -93,7 +184,7 @@ export default function DesktopAudiobookPlayer({ book, pages, onBack }: DesktopA
       audio.play();
     }
     setIsPlaying(!isPlaying);
-  };
+  }, [isPlaying]);
 
   // Add keyboard event listener for spacebar
   useEffect(() => {
@@ -136,51 +227,53 @@ export default function DesktopAudiobookPlayer({ book, pages, onBack }: DesktopA
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%)',
+      background: 'linear-gradient(135deg, #f0f7ff 0%, #ffffff 50%, #fef7f0 100%)',
       display: 'flex',
       flexDirection: 'column'
     }}>
       {/* Header */}
       <header style={{
-        background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.9) 100%)',
-        backdropFilter: 'blur(20px)',
-        borderBottom: '1px solid rgba(255, 87, 87, 0.1)',
-        padding: '1.5rem 0',
-        boxShadow: '0 8px 32px rgba(0,0,0,0.08)'
+        background: 'linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(250,252,255,0.95) 100%)',
+        backdropFilter: 'blur(24px)',
+        borderBottom: '1px solid rgba(99, 102, 241, 0.08)',
+        padding: '2rem 0',
+        boxShadow: '0 12px 40px rgba(99, 102, 241, 0.06)'
       }}>
         <div style={{
-          maxWidth: '1200px',
+          maxWidth: '1400px',
           margin: '0 auto',
-          padding: '0 2rem',
+          padding: '0 clamp(1rem, 4vw, 2rem)',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between'
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '1rem'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <button
               onClick={handleBack}
               style={{
-                background: 'linear-gradient(135deg, #FF5757 0%, #e04848 100%)',
+                background: 'linear-gradient(135deg, #6366f1 0%, #7c3aed 100%)',
                 border: 'none',
-                borderRadius: '12px',
-                padding: '0.75rem 1.5rem',
+                borderRadius: '16px',
+                padding: '1rem 2rem',
                 color: 'white',
                 fontSize: '1rem',
-                fontWeight: '600',
+                fontWeight: '700',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.5rem',
-                boxShadow: '0 4px 16px rgba(255, 87, 87, 0.3)',
-                transition: 'all 0.3s ease'
+                gap: '0.75rem',
+                boxShadow: '0 8px 24px rgba(99, 102, 241, 0.3)',
+                transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
               }}
               onMouseOver={(e) => {
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 8px 24px rgba(255, 87, 87, 0.4)';
+                e.currentTarget.style.transform = 'translateY(-3px) scale(1.02)';
+                e.currentTarget.style.boxShadow = '0 16px 40px rgba(99, 102, 241, 0.4)';
               }}
               onMouseOut={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 4px 16px rgba(255, 87, 87, 0.3)';
+                e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                e.currentTarget.style.boxShadow = '0 8px 24px rgba(99, 102, 241, 0.3)';
               }}
             >
               ← Back
@@ -201,18 +294,18 @@ export default function DesktopAudiobookPlayer({ book, pages, onBack }: DesktopA
               <div>
                 <h1 style={{
                   margin: 0,
-                  fontSize: '1.4rem',
-                  fontWeight: '700',
-                  color: '#1a1a1a',
-                  letterSpacing: '-0.5px'
+                  fontSize: 'clamp(1.2rem, 3vw, 1.5rem)',
+                  fontWeight: '800',
+                  color: '#1e293b',
+                  letterSpacing: '-0.6px'
                 }}>
                   {book.book_title}
                 </h1>
                 <p style={{
                   margin: 0,
                   fontSize: '1rem',
-                  color: '#6b7280',
-                  fontWeight: '500'
+                  color: '#64748b',
+                  fontWeight: '600'
                 }}>
                   by {book.author}
                 </p>
@@ -223,29 +316,31 @@ export default function DesktopAudiobookPlayer({ book, pages, onBack }: DesktopA
           <button
             onClick={() => setShowInfo(true)}
             style={{
-              background: 'rgba(255, 255, 255, 0.8)',
-              border: '2px solid rgba(255, 87, 87, 0.2)',
-              borderRadius: '12px',
-              padding: '0.75rem 1.5rem',
-              color: '#374151',
+              background: 'rgba(255, 255, 255, 0.9)',
+              border: '2px solid rgba(99, 102, 241, 0.2)',
+              borderRadius: '16px',
+              padding: '1rem 2rem',
+              color: '#1e293b',
               fontSize: '1rem',
-              fontWeight: '600',
+              fontWeight: '700',
               cursor: 'pointer',
-              transition: 'all 0.3s ease',
-              backdropFilter: 'blur(10px)'
+              transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+              backdropFilter: 'blur(16px)'
             }}
             onMouseOver={(e) => {
-              e.currentTarget.style.borderColor = 'rgba(255, 87, 87, 0.4)';
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.95)';
-              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.4)';
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.98)';
+              e.currentTarget.style.transform = 'translateY(-3px) scale(1.02)';
+              e.currentTarget.style.boxShadow = '0 12px 32px rgba(99, 102, 241, 0.15)';
             }}
             onMouseOut={(e) => {
-              e.currentTarget.style.borderColor = 'rgba(255, 87, 87, 0.2)';
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.8)';
-              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.2)';
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.9)';
+              e.currentTarget.style.transform = 'translateY(0) scale(1)';
+              e.currentTarget.style.boxShadow = 'none';
             }}
           >
-            ℹ️ Book Info
+Book Info
           </button>
         </div>
       </header>
@@ -254,8 +349,9 @@ export default function DesktopAudiobookPlayer({ book, pages, onBack }: DesktopA
       <div style={{
         flex: 1,
         display: 'flex',
-        gap: '2rem',
-        padding: '2rem',
+        flexDirection: 'row',
+        gap: 'clamp(1rem, 3vw, 2rem)',
+        padding: 'clamp(1rem, 4vw, 2rem)',
         maxWidth: '1400px',
         margin: '0 auto',
         width: '100%',
@@ -332,26 +428,24 @@ export default function DesktopAudiobookPlayer({ book, pages, onBack }: DesktopA
                 <span
                   key={index}
                   style={{
-                    backgroundColor: highlightedWordIndex === index ? 'rgba(255, 87, 87, 0.9)' : 'transparent',
-                    color: highlightedWordIndex === index ? 'white' : 'white',
+                    position: 'relative',
                     padding: '6px 10px',
-                    borderRadius: '8px',
-                    transition: 'all 0.4s ease',
                     cursor: 'pointer',
-                    fontWeight: highlightedWordIndex === index ? '700' : '500',
-                    boxShadow: highlightedWordIndex === index ? 
-                      '0 4px 20px rgba(255, 87, 87, 0.6), 0 0 30px rgba(255, 87, 87, 0.3)' : 
-                      'none',
-                    textShadow: highlightedWordIndex === index ? 
-                      '0 2px 4px rgba(0, 0, 0, 0.8)' : 
-                      '2px 2px 8px rgba(0, 0, 0, 0.7), 0 0 20px rgba(0, 0, 0, 0.5)',
-                    transform: highlightedWordIndex === index ? 'scale(1.05)' : 'scale(1)',
+                    fontWeight: '500',
+                    color: 'white',
+                    textShadow: '2px 2px 8px rgba(0, 0, 0, 0.7), 0 0 20px rgba(0, 0, 0, 0.5)',
                     display: 'inline-block',
                     flexShrink: 0
                   }}
                   onClick={() => {
                     const audio = audioRef.current;
-                    if (audio) {
+                    if (audio && !isSequentialHighlighting) {
+                      // Stop any ongoing sequential highlighting
+                      if (sequentialTimeoutRef.current) {
+                        clearTimeout(sequentialTimeoutRef.current);
+                        setIsSequentialHighlighting(false);
+                      }
+                      
                       // Find which page this timing belongs to
                       const targetPageIndex = pages.findIndex(page => {
                         const pageWordData = page.word_data as unknown as WordData;
@@ -364,7 +458,7 @@ export default function DesktopAudiobookPlayer({ book, pages, onBack }: DesktopA
                         setCurrentPageIndex(targetPageIndex);
                       }
                       
-                      // Always set highlighted word immediately
+                      // Simple click handling - just jump to the word and update audio time
                       setHighlightedWordIndex(timing.index);
                       audio.currentTime = timing.startTime;
                     }
@@ -372,40 +466,59 @@ export default function DesktopAudiobookPlayer({ book, pages, onBack }: DesktopA
                   onMouseOver={(e) => {
                     if (highlightedWordIndex !== index) {
                       e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
-                      e.currentTarget.style.transform = 'scale(1.02)';
                     }
                   }}
                   onMouseOut={(e) => {
                     if (highlightedWordIndex !== index) {
                       e.currentTarget.style.backgroundColor = 'transparent';
-                      e.currentTarget.style.transform = 'scale(1)';
                     }
                   }}
                 >
-                  {timing.word}
+                  {highlightedWordIndex === index && (
+                    <span
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundColor: 'rgba(99, 102, 241, 0.9)',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 20px rgba(99, 102, 241, 0.6), 0 0 30px rgba(99, 102, 241, 0.3)',
+                        transition: 'all 0.4s ease',
+                        zIndex: -1
+                      }}
+                    />
+                  )}
+                  <span style={{
+                    position: 'relative',
+                    zIndex: 2,
+                    fontWeight: highlightedWordIndex === index ? '700' : '500'
+                  }}>
+                    {timing.word}
+                  </span>
                 </span>
               ))}
             </div>
           </div>
         </main>
 
-        {/* Audio Controls Sidebar - Outside of background */}
+        {/* Audio Controls Sidebar - Redesigned Layout */}
         <aside style={{
-          flex: 1,
-          maxWidth: '400px',
-          minWidth: '350px',
+          flex: '0 0 auto',
+          width: 'clamp(300px, 30vw, 380px)',
           display: 'flex',
           flexDirection: 'column',
-          gap: '2rem'
+          gap: '1.5rem'
         }}>
           {/* Audio Controls */}
           <div style={{
-            background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.9) 100%)',
-            borderRadius: '24px',
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(250,252,255,0.95) 100%)',
+            borderRadius: '28px',
             padding: '2.5rem',
-            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.12)',
-            border: '1px solid rgba(255, 87, 87, 0.1)',
-            backdropFilter: 'blur(20px)'
+            boxShadow: '0 32px 80px rgba(99, 102, 241, 0.15)',
+            border: '2px solid rgba(99, 102, 241, 0.08)',
+            backdropFilter: 'blur(24px)'
           }}>
               {/* Progress Bar */}
               <div style={{ marginBottom: '2rem' }}>
@@ -422,37 +535,35 @@ export default function DesktopAudiobookPlayer({ book, pages, onBack }: DesktopA
                   }}
                   style={{
                     width: '100%',
-                    height: '10px',
-                    borderRadius: '10px',
+                    height: '8px',
+                    borderRadius: '8px',
                     outline: 'none',
                     cursor: 'pointer',
-                    background: `linear-gradient(to right, #FF5757 0%, #FF5757 ${(currentTime / (book.total_duration_ms / 1000)) * 100}%, rgba(255, 87, 87, 0.15) ${(currentTime / (book.total_duration_ms / 1000)) * 100}%, rgba(255, 87, 87, 0.15) 100%)`,
+                    background: `linear-gradient(to right, #6366f1 0%, #7c3aed ${(currentTime / (book.total_duration_ms / 1000)) * 100}%, rgba(99, 102, 241, 0.15) ${(currentTime / (book.total_duration_ms / 1000)) * 100}%, rgba(99, 102, 241, 0.15) 100%)`,
                     WebkitAppearance: 'none',
                     appearance: 'none',
-                    boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)'
+                    boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.08)'
                   }}
                 />
                 <div style={{
                   display: 'flex',
                   justifyContent: 'space-between',
-                  fontSize: '0.95rem',
+                  fontSize: '0.9rem',
                   color: '#6b7280',
-                  marginTop: '1rem',
-                  fontWeight: '600',
-                  letterSpacing: '0.5px'
+                  marginTop: '0.75rem',
+                  fontWeight: '600'
                 }}>
                   <span>{formatTime(currentTime)}</span>
                   <span>{formatTime(book.total_duration_ms / 1000)}</span>
                 </div>
               </div>
 
-              {/* Play Controls */}
+              {/* Play Controls - Centered and Balanced */}
               <div style={{
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center',
-                gap: '2rem',
-                marginTop: '1rem'
+                gap: '1.5rem'
               }}>
                 <button
                   onClick={() => {
@@ -462,34 +573,32 @@ export default function DesktopAudiobookPlayer({ book, pages, onBack }: DesktopA
                   }}
                   disabled={currentPageIndex === 0}
                   style={{
-                    background: currentPageIndex === 0 ? 'rgba(243, 244, 246, 0.8)' : 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.85) 100%)',
-                    border: `2px solid ${currentPageIndex === 0 ? 'rgba(229, 231, 235, 0.5)' : 'rgba(255, 87, 87, 0.2)'}`,
+                    background: currentPageIndex === 0 ? 'rgba(243, 244, 246, 0.8)' : 'linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(250,252,255,0.95) 100%)',
+                    border: `2px solid ${currentPageIndex === 0 ? 'rgba(229, 231, 235, 0.5)' : 'rgba(99, 102, 241, 0.2)'}`,
                     borderRadius: '20px',
                     width: '64px',
                     height: '64px',
-                    color: currentPageIndex === 0 ? '#9ca3af' : '#FF5757',
-                    fontSize: '1.4rem',
+                    color: currentPageIndex === 0 ? '#9ca3af' : '#6366f1',
+                    fontSize: '1.3rem',
                     cursor: currentPageIndex === 0 ? 'not-allowed' : 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    transition: 'all 0.3s ease',
-                    boxShadow: currentPageIndex === 0 ? '0 4px 12px rgba(0, 0, 0, 0.08)' : '0 8px 24px rgba(255, 87, 87, 0.2)',
+                    transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                    boxShadow: currentPageIndex === 0 ? '0 4px 12px rgba(0, 0, 0, 0.08)' : '0 12px 32px rgba(99, 102, 241, 0.2)',
                     fontWeight: 'bold',
-                    backdropFilter: 'blur(10px)'
+                    backdropFilter: 'blur(16px)'
                   }}
                   onMouseOver={(e) => {
                     if (currentPageIndex > 0) {
-                      e.currentTarget.style.transform = 'scale(1.05) translateY(-2px)';
-                      e.currentTarget.style.boxShadow = '0 12px 32px rgba(255, 87, 87, 0.35)';
-                      e.currentTarget.style.borderColor = 'rgba(255, 87, 87, 0.4)';
+                      e.currentTarget.style.transform = 'scale(1.08) translateY(-2px)';
+                      e.currentTarget.style.boxShadow = '0 20px 48px rgba(99, 102, 241, 0.3)';
                     }
                   }}
                   onMouseOut={(e) => {
                     if (currentPageIndex > 0) {
                       e.currentTarget.style.transform = 'scale(1) translateY(0)';
-                      e.currentTarget.style.boxShadow = '0 8px 24px rgba(255, 87, 87, 0.2)';
-                      e.currentTarget.style.borderColor = 'rgba(255, 87, 87, 0.2)';
+                      e.currentTarget.style.boxShadow = '0 12px 32px rgba(99, 102, 241, 0.2)';
                     }
                   }}
                 >
@@ -499,29 +608,28 @@ export default function DesktopAudiobookPlayer({ book, pages, onBack }: DesktopA
                 <button
                   onClick={togglePlayPause}
                   style={{
-                    background: 'linear-gradient(135deg, #FF5757 0%, #e04848 100%)',
-                    border: '3px solid rgba(255, 255, 255, 0.4)',
-                    borderRadius: '28px',
-                    width: '90px',
-                    height: '90px',
+                    background: 'linear-gradient(135deg, #6366f1 0%, #7c3aed 100%)',
+                    border: '3px solid rgba(255, 255, 255, 0.3)',
+                    borderRadius: '24px',
+                    width: '80px',
+                    height: '80px',
                     color: 'white',
-                    fontSize: '2.2rem',
+                    fontSize: '2rem',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    boxShadow: '0 12px 40px rgba(255, 87, 87, 0.4), 0 0 0 0 rgba(255, 87, 87, 0.3)',
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                    fontWeight: 'bold',
-                    position: 'relative'
+                    boxShadow: '0 16px 48px rgba(99, 102, 241, 0.4)',
+                    transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                    fontWeight: 'bold'
                   }}
                   onMouseOver={(e) => {
-                    e.currentTarget.style.transform = 'scale(1.08) translateY(-3px)';
-                    e.currentTarget.style.boxShadow = '0 20px 60px rgba(255, 87, 87, 0.5), 0 0 0 8px rgba(255, 87, 87, 0.1)';
+                    e.currentTarget.style.transform = 'scale(1.1) translateY(-3px)';
+                    e.currentTarget.style.boxShadow = '0 24px 64px rgba(99, 102, 241, 0.5)';
                   }}
                   onMouseOut={(e) => {
                     e.currentTarget.style.transform = 'scale(1) translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 12px 40px rgba(255, 87, 87, 0.4), 0 0 0 0 rgba(255, 87, 87, 0.3)';
+                    e.currentTarget.style.boxShadow = '0 16px 48px rgba(99, 102, 241, 0.4)';
                   }}
                 >
                   {isPlaying ? '⏸' : '▶'}
@@ -535,34 +643,32 @@ export default function DesktopAudiobookPlayer({ book, pages, onBack }: DesktopA
                   }}
                   disabled={currentPageIndex === pages.length - 1}
                   style={{
-                    background: currentPageIndex === pages.length - 1 ? 'rgba(243, 244, 246, 0.8)' : 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.85) 100%)',
-                    border: `2px solid ${currentPageIndex === pages.length - 1 ? 'rgba(229, 231, 235, 0.5)' : 'rgba(255, 87, 87, 0.2)'}`,
+                    background: currentPageIndex === pages.length - 1 ? 'rgba(243, 244, 246, 0.8)' : 'linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(250,252,255,0.95) 100%)',
+                    border: `2px solid ${currentPageIndex === pages.length - 1 ? 'rgba(229, 231, 235, 0.5)' : 'rgba(99, 102, 241, 0.2)'}`,
                     borderRadius: '20px',
                     width: '64px',
                     height: '64px',
-                    color: currentPageIndex === pages.length - 1 ? '#9ca3af' : '#FF5757',
-                    fontSize: '1.4rem',
+                    color: currentPageIndex === pages.length - 1 ? '#9ca3af' : '#6366f1',
+                    fontSize: '1.3rem',
                     cursor: currentPageIndex === pages.length - 1 ? 'not-allowed' : 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    transition: 'all 0.3s ease',
-                    boxShadow: currentPageIndex === pages.length - 1 ? '0 4px 12px rgba(0, 0, 0, 0.08)' : '0 8px 24px rgba(255, 87, 87, 0.2)',
+                    transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                    boxShadow: currentPageIndex === pages.length - 1 ? '0 4px 12px rgba(0, 0, 0, 0.08)' : '0 12px 32px rgba(99, 102, 241, 0.2)',
                     fontWeight: 'bold',
-                    backdropFilter: 'blur(10px)'
+                    backdropFilter: 'blur(16px)'
                   }}
                   onMouseOver={(e) => {
                     if (currentPageIndex < pages.length - 1) {
-                      e.currentTarget.style.transform = 'scale(1.05) translateY(-2px)';
-                      e.currentTarget.style.boxShadow = '0 12px 32px rgba(255, 87, 87, 0.35)';
-                      e.currentTarget.style.borderColor = 'rgba(255, 87, 87, 0.4)';
+                      e.currentTarget.style.transform = 'scale(1.08) translateY(-2px)';
+                      e.currentTarget.style.boxShadow = '0 20px 48px rgba(99, 102, 241, 0.3)';
                     }
                   }}
                   onMouseOut={(e) => {
                     if (currentPageIndex < pages.length - 1) {
                       e.currentTarget.style.transform = 'scale(1) translateY(0)';
-                      e.currentTarget.style.boxShadow = '0 8px 24px rgba(255, 87, 87, 0.2)';
-                      e.currentTarget.style.borderColor = 'rgba(255, 87, 87, 0.2)';
+                      e.currentTarget.style.boxShadow = '0 12px 32px rgba(99, 102, 241, 0.2)';
                     }
                   }}
                 >
@@ -573,51 +679,51 @@ export default function DesktopAudiobookPlayer({ book, pages, onBack }: DesktopA
 
           {/* Current Page Info */}
           <div style={{
-            background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.9) 100%)',
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(250,252,255,0.95) 100%)',
             borderRadius: '24px',
             padding: '2rem',
-            boxShadow: '0 12px 35px rgba(0, 0, 0, 0.08)',
-            border: '1px solid rgba(255, 87, 87, 0.1)',
+            boxShadow: '0 20px 48px rgba(99, 102, 241, 0.12)',
+            border: '2px solid rgba(99, 102, 241, 0.08)',
             textAlign: 'center',
-            backdropFilter: 'blur(20px)'
+            backdropFilter: 'blur(24px)'
           }}>
             <div style={{
               fontSize: '1.3rem',
-              fontWeight: '700',
-              color: '#1a1a1a',
+              fontWeight: '800',
+              color: '#1e293b',
               marginBottom: '1.5rem',
-              letterSpacing: '-0.5px'
+              letterSpacing: '-0.4px'
             }}>
               Page {currentPageIndex + 1} of {pages.length}
             </div>
             <div style={{
               width: '100%',
               height: '12px',
-              backgroundColor: 'rgba(255, 87, 87, 0.12)',
+              backgroundColor: 'rgba(99, 102, 241, 0.12)',
               borderRadius: '12px',
               overflow: 'hidden',
-              boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.08)'
+              boxShadow: 'inset 0 2px 6px rgba(0,0,0,0.08)'
             }}>
               <div style={{
                 width: `${((currentPageIndex + 1) / pages.length) * 100}%`,
                 height: '100%',
-                background: 'linear-gradient(90deg, #FF5757 0%, #e04848 100%)',
+                background: 'linear-gradient(90deg, #6366f1 0%, #7c3aed 100%)',
                 borderRadius: '12px',
                 transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                boxShadow: '0 2px 8px rgba(255, 87, 87, 0.3)'
+                boxShadow: '0 2px 8px rgba(99, 102, 241, 0.3)'
               }} />
             </div>
           </div>
 
           {/* Buy Now Button */}
           <div style={{
-            background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.9) 100%)',
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(250,252,255,0.95) 100%)',
             borderRadius: '24px',
             padding: '2rem',
-            boxShadow: '0 12px 35px rgba(0, 0, 0, 0.08)',
-            border: '1px solid rgba(255, 87, 87, 0.1)',
+            boxShadow: '0 20px 48px rgba(99, 102, 241, 0.12)',
+            border: '2px solid rgba(99, 102, 241, 0.08)',
             textAlign: 'center',
-            backdropFilter: 'blur(20px)'
+            backdropFilter: 'blur(24px)'
           }}>
             <a
               href={book.purchase_link}
@@ -626,37 +732,37 @@ export default function DesktopAudiobookPlayer({ book, pages, onBack }: DesktopA
               style={{
                 display: 'inline-block',
                 width: '100%',
-                background: 'linear-gradient(135deg, #FF9500 0%, #FF7700 100%)',
+                background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
                 color: 'white',
-                padding: '1.2rem 2rem',
+                padding: '1.2rem 1.75rem',
                 borderRadius: '16px',
                 textDecoration: 'none',
-                fontSize: '1.1rem',
+                fontSize: '1rem',
                 fontWeight: '700',
-                boxShadow: '0 12px 40px rgba(255, 149, 0, 0.35)',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                boxShadow: '0 12px 32px rgba(245, 158, 11, 0.35)',
+                transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                 border: 'none',
                 cursor: 'pointer',
-                letterSpacing: '0.5px'
+                letterSpacing: '0.3px'
               }}
               onMouseOver={(e) => {
                 e.currentTarget.style.transform = 'translateY(-3px) scale(1.02)';
-                e.currentTarget.style.boxShadow = '0 20px 60px rgba(255, 149, 0, 0.45)';
+                e.currentTarget.style.boxShadow = '0 20px 48px rgba(245, 158, 11, 0.45)';
               }}
               onMouseOut={(e) => {
                 e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                e.currentTarget.style.boxShadow = '0 12px 40px rgba(255, 149, 0, 0.35)';
+                e.currentTarget.style.boxShadow = '0 12px 32px rgba(245, 158, 11, 0.35)';
               }}
             >
               🛒 BUY NOW
             </a>
             <div style={{
-              fontSize: '0.85rem',
+              fontSize: '0.8rem',
               color: '#6b7280',
-              marginTop: '0.75rem',
+              marginTop: '0.5rem',
               fontWeight: '500'
             }}>
-              Get the physical book
+              Get the book
             </div>
           </div>
         </aside>
@@ -842,7 +948,7 @@ export default function DesktopAudiobookPlayer({ book, pages, onBack }: DesktopA
                 color: '#999',
                 marginTop: '0.5rem'
               }}>
-                Support us by purchasing the physical book
+                More info & purchase options
               </div>
             </div>
           </div>
